@@ -5,13 +5,14 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="drf_dynamics",
-    version="0.0.1",
+    version="0.0.2",
     author="Ilya Bokov",
     author_email="eli.k.bokov@gmail.com",
     description="Dynamic mixins for Django REST Framework",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/imbokov/drf_dynamics",
+    packages=setuptools.find_packages(),
     install_requires=["django>=1.11", "djangorestframework>=3.7.0"],
     python_requires=">=3.5",
     classifiers=[
