@@ -1,4 +1,5 @@
 import itertools
+from collections import Mapping, Sequence
 from operator import itemgetter
 
 from .specs import DynamicAnnotation, DynamicPrefetch, DynamicSelect, DynamicSpec
@@ -49,22 +50,23 @@ def dynamic_queryset(prefetches=None, annotations=None, selects=None):
         if not spec:
             return {}
 
-        sequences_to_merge = ()
-        dict_to_merge = {}
+        sequence_to_merge = ()
+        mapping_to_merge = {}
         if isinstance(spec, str):
-            sequences_to_merge = (spec,)
-        elif isinstance(spec, dict):
-            dict_to_merge = spec
-        elif isinstance(spec[-1], dict):
-            sequences_to_merge = spec[:-1]
-            dict_to_merge = spec[-1]
-        else:
-            sequences_to_merge = spec
+            sequence_to_merge = (spec,)
+        elif isinstance(spec, Mapping):
+            mapping_to_merge = spec
+        elif isinstance(spec, Sequence):
+            if isinstance(spec[-1], Mapping):
+                sequence_to_merge = spec[:-1]
+                mapping_to_merge = spec[-1]
+            else:
+                sequence_to_merge = spec
         return dict(
             sorted(
                 {
-                    **{path: None for path in sequences_to_merge},
-                    **dict_to_merge,
+                    **{path: None for path in sequence_to_merge},
+                    **mapping_to_merge,
                 }.items(),
                 key=itemgetter(0),
             )
