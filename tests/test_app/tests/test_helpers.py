@@ -70,14 +70,14 @@ class DynamicQuerySetTestCase(TestCase):
             DynamicSelect("host"), self.viewset_class.dynamic_selects["host"],
         )
         self.assertSpecsEqual(
-            DynamicSelect("invites.sender", parent_prefetch_path="invites"),
+            DynamicSelect("sender", parent_prefetch_path="invites"),
             self.viewset_class.dynamic_selects["invites.sender"],
         )
         self.assertSpecsEqual(
-            DynamicSelect("invites.recipient", parent_prefetch_path="invites"),
+            DynamicSelect("recipient", parent_prefetch_path="invites"),
             self.viewset_class.dynamic_selects["invites.recipient"],
         )
         self.assertSpecsEqual(
-            DynamicSelect("invites.answer", parent_prefetch_path="invites"),
+            DynamicSelect("answer", parent_prefetch_path="invites"),
             self.viewset_class.dynamic_selects["invites.answer"],
         )
