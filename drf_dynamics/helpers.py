@@ -16,9 +16,11 @@ def tagged_chain(*iterables, tag_names=None):
     assert all(
         isinstance(iterable, Collection) for iterable in iterables
     ), "Supplied iterables have to be a Collection"
-    assert isinstance(tag_names, Sequence), "tag_names should be a Sequence"
-    assert len(iterables) == len(
-        tag_names
+    assert (
+        isinstance(tag_names, Sequence) if tag_names is not None else True
+    ), "tag_names should be a Sequence"
+    assert (
+        len(iterables) == len(tag_names) if tag_names is not None else True
     ), "The amount of iterables supplied doesn't match the tag_names"
 
     def get_meta():
