@@ -30,24 +30,7 @@ class DynamicPermissionClassesMixin:
         return [permission() for permission in permission_classes]
 
 
-class RequestedFieldsMixin:
-    def get_request(self):
-        raise NotImplemented(
-            "Specify `get_request`, if you're inheriting from RequestedFieldsMixin"
-        )
-
-    @cached_property
-    def requested_fields(self):
-        requested_fields = self.get_request().query_params.get("fields")
-        if not requested_fields:
-            return None
-        ret = {}
-        for path in requested_fields.lower().split(","):
-            set_deep(ret, path, {})
-        return ret
-
-
-class DynamicQuerySetMixin(RequestedFieldsMixin):
+class DynamicQuerySetMixin:
     dynamic_fields_actions = {
         "create",
         "list",
@@ -59,8 +42,15 @@ class DynamicQuerySetMixin(RequestedFieldsMixin):
     dynamic_annotations = {}
     dynamic_selects = {}
 
-    def get_request(self):
-        return self.request
+    @cached_property
+    def requested_fields(self):
+        requested_fields = self.request.query_params.get("fields")
+        if not requested_fields:
+            return None
+        ret = {}
+        for path in requested_fields.lower().split(","):
+            set_deep(ret, path, {})
+        return ret
 
     def setup_dynamic_queryset(self, queryset):
         prefetches_map = {}
@@ -125,17 +115,13 @@ class DynamicQuerySetMixin(RequestedFieldsMixin):
         return super().get_serializer(*args, **kwargs)
 
 
-class DynamicFieldsMixin(RequestedFieldsMixin):
+class DynamicFieldsMixin:
     pk_field_name = "id"
     representation_fields = {}
 
     def __init__(self, *args, **kwargs):
-        if "requested_fields" in kwargs:
-            self.requested_fields = kwargs.pop("requested_fields")
+        self.requested_fields = kwargs.pop("requested_fields", None)
         super().__init__(*args, **kwargs)
-
-    def get_request(self):
-        return self.context["request"]
 
     @staticmethod
     def use_pk_only_optimization():
