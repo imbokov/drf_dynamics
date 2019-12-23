@@ -137,18 +137,6 @@ class DynamicFieldsMixinTestCase(TestCase):
         self.answer = Answer.objects.create(text="foo", invite=self.invite)
         self.details = Details.objects.create(answer=self.answer, reviewer=self.user)
 
-    def test_dynamic_fields_actions(self):
-        query_params = {"fields": "host.id,invites.answer.id"}
-        viewset = self.viewset_class(
-            request=MockRequest(query_params=query_params),
-            action="destroy",
-            format_kwarg="json",
-        )
-        serializer = viewset.get_serializer(self.party)
-        self.assertEqual(
-            self.serializer_class(self.party).data, serializer.data,
-        )
-
     def test_empty_fields(self):
         query_params = {"fields": "id,title,invites"}
         viewset = self.viewset_class(
@@ -158,7 +146,7 @@ class DynamicFieldsMixinTestCase(TestCase):
         )
         serializer = viewset.get_serializer(self.party)
         self.assertEqual(
-            {"id": self.party.pk, "title": self.party.title}, serializer.data,
+            {"id": self.party.pk, "title": self.party.title}, serializer.data
         )
 
     def test_pk_only_optimization(self):
