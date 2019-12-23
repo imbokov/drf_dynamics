@@ -1,7 +1,7 @@
 from drf_dynamics.helpers import dynamic_queryset, tagged_chain
 from drf_dynamics.specs import DynamicAnnotation, DynamicPrefetch, DynamicSelect
-from tests.test_app.models import Answer, Details, Invite, Party
-from tests.test_app.tests.testcases import TestCase
+from .testcases import TestCase
+from ..models import Answer, Details, Invite, Party
 
 
 class TaggedChainTestCase(TestCase):
@@ -88,10 +88,8 @@ class DynamicQuerySetTestCase(TestCase):
 
         prefetches = {
             "invites": DynamicPrefetch("invites", get_invites),
-            "invites.answers": DynamicPrefetch("answer", Answer.objects.all()),
-            "invites.answers.details": DynamicPrefetch(
-                "details", Details.objects.all()
-            ),
+            "invites.answers": "answer",
+            "invites.answers.details": "details",
             "invites.answers.unreviewed_details": DynamicPrefetch(
                 "details",
                 Details.objects.filter(reviewed=False),

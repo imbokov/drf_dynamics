@@ -1,5 +1,7 @@
 from django.db import models
 
+from .managers import AnswerManager, InviteManager, PartyManager
+
 
 class Person(models.Model):
     name = models.CharField(max_length=255)
@@ -10,6 +12,8 @@ class Party(models.Model):
     host = models.ForeignKey(
         Person, on_delete=models.CASCADE, related_name="hosted_parties"
     )
+
+    objects = PartyManager()
 
 
 class Invite(models.Model):
@@ -22,12 +26,16 @@ class Invite(models.Model):
     )
     text = models.TextField()
 
+    objects = InviteManager()
+
 
 class Answer(models.Model):
     invite = models.OneToOneField(
         Invite, on_delete=models.CASCADE, related_name="answer"
     )
     text = models.TextField()
+
+    objects = AnswerManager()
 
 
 class Details(models.Model):
