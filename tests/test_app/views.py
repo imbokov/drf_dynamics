@@ -4,6 +4,7 @@ from drf_dynamics.helpers import dynamic_queryset
 from drf_dynamics.mixins import DynamicQuerySetMixin
 from drf_dynamics.specs import DynamicPrefetch
 from .models import Invite, Party
+from .serializers import PartySerializer
 
 
 @dynamic_queryset(
@@ -26,3 +27,4 @@ from .models import Invite, Party
 )
 class PartyViewSet(DynamicQuerySetMixin, GenericViewSet):
     queryset = Party.objects.all()
+    serializer_class = PartySerializer

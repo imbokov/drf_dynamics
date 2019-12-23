@@ -137,9 +137,13 @@ class DynamicFieldsMixin:
             len(self._readable_fields) == 1
             and self._readable_fields[0].field_name == self.pk_field_name
         ):
-            pk_only = RelatedField.get_attribute(self, instance)
-            setattr(pk_only, self.pk_field_name, pk_only.pk)
-            return pk_only
+            try:
+                pk_only = RelatedField.get_attribute(self, instance)
+                setattr(pk_only, self.pk_field_name, pk_only.pk)
+                return pk_only
+            # Impossible in the case of reverse OneToOneField.
+            except TypeError:
+                pass
         return super().get_attribute(instance)
 
     @staticmethod
@@ -174,7 +178,8 @@ class DynamicFieldsMixin:
                 continue
 
             if tag == "base":
-                fields[field_name] = field
+                if field_name not in representation_fields:
+                    fields[field_name] = field
                 continue
 
             nested_fields = self.requested_fields[field_name]
