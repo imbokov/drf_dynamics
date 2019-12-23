@@ -29,7 +29,13 @@ class InviteQuerySet(models.QuerySet):
         )
 
     def with_has_answer(self, request):
-        return self.annotate(answer__isnull=False)
+        from .models import Answer
+
+        return self.annotate(
+            has_answer=models.Exists(
+                Answer.objects.filter(invite=models.OuterRef("pk"))
+            )
+        )
 
 
 class InviteManager(models.Manager.from_queryset(InviteQuerySet)):

@@ -12,7 +12,9 @@ class TestCase(APITestCase):
         self.assertEqual(
             len(qs._prefetch_related_lookups), len(other._prefetch_related_lookups)
         )
-        for qs_prefetch, other_prefetch in zip(qs, other):
+        for qs_prefetch, other_prefetch in zip(
+            qs._prefetch_related_lookups, other._prefetch_related_lookups
+        ):
             self.assertEqual(
                 qs_prefetch.prefetch_through, other_prefetch.prefetch_through
             )
