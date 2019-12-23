@@ -1,6 +1,6 @@
 from drf_dynamics.helpers import dynamic_queryset, tagged_chain
 from drf_dynamics.specs import DynamicAnnotation, DynamicPrefetch, DynamicSelect
-from tests.test_app.models import Invite, Party
+from tests.test_app.models import Answer, Details, Invite, Party
 from tests.test_app.tests.testcases import TestCase
 
 
@@ -80,4 +80,101 @@ class DynamicQuerySetTestCase(TestCase):
         self.assertSpecsEqual(
             DynamicSelect("answer", parent_prefetch_path="invites"),
             self.viewset_class.dynamic_selects["invites.answer"],
+        )
+
+    def test_mappings(self):
+        def get_invites(request):
+            return Invite.objects.for_user(request.user)
+
+        prefetches = {
+            "invites": DynamicPrefetch("invites", get_invites),
+            "invites.answers": DynamicPrefetch("answer", Answer.objects.all()),
+            "invites.answers.details": DynamicPrefetch(
+                "details", Details.objects.all()
+            ),
+            "invites.answers.unreviewed_details": DynamicPrefetch(
+                "details",
+                Details.objects.filter(reviewed=False),
+                to_attr="unreviewed_details",
+            ),
+        }
+        annotations = (
+            "invites_count",
+            {
+                "invites.has_answer": "has_answer",
+                "invites.answers.all_details_reviewed": "details_reviewed",
+            },
+        )
+        selects = (
+            "host",
+            "invites.sender",
+            "invites.recipient",
+            {"invites.answers.person_who_reviewed": "reviewer"},
+        )
+
+        dynamic_queryset(
+            prefetches=prefetches, annotations=annotations, selects=selects
+        )(self.viewset_class)
+
+        self.assertEqual(4, len(self.viewset_class.dynamic_prefetches))
+        prefetch_to_compare = DynamicPrefetch("invites", get_invites)
+        prefetch_to_compare.queryset = Invite.objects.all()
+        self.assertSpecsEqual(
+            prefetch_to_compare, self.viewset_class.dynamic_prefetches["invites"],
+        )
+        self.assertSpecsEqual(
+            DynamicPrefetch(
+                "answer", Answer.objects.all(), parent_prefetch_path="invites"
+            ),
+            self.viewset_class.dynamic_prefetches["invites.answers"],
+        )
+        self.assertSpecsEqual(
+            DynamicPrefetch(
+                "details", Details.objects.all(), parent_prefetch_path="invites.answers"
+            ),
+            self.viewset_class.dynamic_prefetches["invites.answers.details"],
+        )
+        self.assertSpecsEqual(
+            DynamicPrefetch(
+                "details",
+                Details.objects.filter(reviewed=False),
+                to_attr="unreviewed_details",
+                parent_prefetch_path="invites.answers",
+            ),
+            self.viewset_class.dynamic_prefetches["invites.answers.unreviewed_details"],
+        )
+
+        self.assertEqual(3, len(self.viewset_class.dynamic_annotations))
+        self.assertSpecsEqual(
+            DynamicAnnotation("with_invites_count"),
+            self.viewset_class.dynamic_annotations["invites_count"],
+        )
+        self.assertSpecsEqual(
+            DynamicAnnotation("has_answer", parent_prefetch_path="invites"),
+            self.viewset_class.dynamic_annotations["invites.has_answer"],
+        )
+        self.assertSpecsEqual(
+            DynamicAnnotation(
+                "details_reviewed", parent_prefetch_path="invites.answers"
+            ),
+            self.viewset_class.dynamic_annotations[
+                "invites.answers.all_details_reviewed"
+            ],
+        )
+
+        self.assertEqual(4, len(self.viewset_class.dynamic_selects))
+        self.assertSpecsEqual(
+            DynamicSelect("host"), self.viewset_class.dynamic_selects["host"],
+        )
+        self.assertSpecsEqual(
+            DynamicSelect("sender", parent_prefetch_path="invites"),
+            self.viewset_class.dynamic_selects["invites.sender"],
+        )
+        self.assertSpecsEqual(
+            DynamicSelect("recipient", parent_prefetch_path="invites"),
+            self.viewset_class.dynamic_selects["invites.recipient"],
+        )
+        self.assertSpecsEqual(
+            DynamicSelect("reviewer", parent_prefetch_path="invites.answers"),
+            self.viewset_class.dynamic_selects["invites.answers.person_who_reviewed"],
         )

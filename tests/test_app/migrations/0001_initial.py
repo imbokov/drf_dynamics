@@ -9,6 +9,21 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
+            name="Answer",
+            fields=[
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("text", models.TextField()),
+            ],
+        ),
+        migrations.CreateModel(
             name="Person",
             fields=[
                 (
@@ -86,7 +101,7 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name="Answer",
+            name="Details",
             fields=[
                 (
                     "id",
@@ -97,15 +112,32 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("text", models.TextField()),
+                ("reviewed", models.BooleanField(default=False)),
                 (
-                    "invite",
-                    models.OneToOneField(
+                    "answer",
+                    models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="answer",
-                        to="test_app.Invite",
+                        related_name="details",
+                        to="test_app.Answer",
+                    ),
+                ),
+                (
+                    "reviewer",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="reviewed_details",
+                        to="test_app.Person",
                     ),
                 ),
             ],
+        ),
+        migrations.AddField(
+            model_name="answer",
+            name="invite",
+            field=models.OneToOneField(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="answer",
+                to="test_app.Invite",
+            ),
         ),
     ]

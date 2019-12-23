@@ -5,9 +5,12 @@ from drf_dynamics.specs import DynamicPrefetch
 
 class TestCase(APITestCase):
     def assertQuerysetsEqual(self, qs, other):
-        self.assertTrue(str(qs.query) == str(other.query))
-        self.assertTrue(
-            len(qs._prefetch_related_lookups) == len(other._prefetch_related_lookups)
+        """
+        Only works if prefetches are not string and have querysets.
+        """
+        self.assertEqual(str(qs.query), str(other.query))
+        self.assertEqual(
+            len(qs._prefetch_related_lookups), len(other._prefetch_related_lookups)
         )
         for qs_prefetch, other_prefetch in zip(qs, other):
             self.assertEqual(
@@ -18,14 +21,10 @@ class TestCase(APITestCase):
             self.assertEqual(qs_prefetch.to_attr, other_prefetch.to_attr)
 
     def assertSpecsEqual(self, spec, other):
-        self.assertTrue(
-            type(spec) is type(other)
-            and {
-                key: value for key, value in spec.__dict__.items() if key != "queryset"
-            }
-            == {
-                key: value for key, value in other.__dict__.items() if key != "queryset"
-            }
+        self.assertIs(type(spec), type(other))
+        self.assertEqual(
+            {key: value for key, value in spec.__dict__.items() if key != "queryset"},
+            {key: value for key, value in other.__dict__.items() if key != "queryset"},
         )
         if isinstance(spec, DynamicPrefetch):
             self.assertQuerysetsEqual(spec.queryset, other.queryset)

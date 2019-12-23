@@ -28,3 +28,11 @@ class Answer(models.Model):
         Invite, on_delete=models.CASCADE, related_name="answer"
     )
     text = models.TextField()
+
+
+class Details(models.Model):
+    answer = models.ForeignKey(Answer, on_delete=models.CASCADE, related_name="details")
+    reviewer = models.ForeignKey(
+        Person, on_delete=models.CASCADE, related_name="reviewed_details"
+    )
+    reviewed = models.BooleanField(default=False)
