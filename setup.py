@@ -12,7 +12,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/imbokov/drf_dynamics",
-    packages=setuptools.find_packages(),
+    packages=["drf_dynamics"],
     install_requires=["django>=1.11", "djangorestframework>=3.7.0"],
     python_requires=">=3.5",
     classifiers=[
