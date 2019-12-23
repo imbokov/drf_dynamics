@@ -5,4 +5,4 @@ from .mixins import (
     DynamicQuerySetMixin,
     DynamicSerializerClassMixin,
 )
-from .specs import DynamicPrefetch
+from .specs import DynamicAnnotation, DynamicPrefetch, DynamicSelect

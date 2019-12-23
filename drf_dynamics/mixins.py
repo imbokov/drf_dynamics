@@ -53,27 +53,28 @@ class DynamicQuerySetMixin:
         return ret
 
     def setup_dynamic_queryset(self, queryset):
-        if not self.requested_fields:
-            return queryset
-
         prefetches_map = {}
+        allow_all_fields = self.requested_fields is None
+
         for tag, (path, spec) in tagged_chain(
             self.dynamic_prefetches.items(),
             self.dynamic_annotations.items(),
             self.dynamic_selects.items(),
             tag_names=("prefetch", "annotation", "select"),
         ):
-            requested_slice = get_deep(self.requested_fields, path)
-            if requested_slice is None:
-                continue
-            # If the only field we're requesting is a pk, we don't need to select it.
-            # Make sure your serializer grabs the value smartly, though.
-            if (
-                tag == "select"
-                and len(requested_slice) == 1
-                and spec.pk_field_name in requested_slice
-            ):
-                continue
+            if not allow_all_fields:
+                requested_slice = get_deep(self.requested_fields, path)
+                if requested_slice is None:
+                    continue
+                # If the only field we're requesting is a pk,
+                # we don't need to select it.
+                # Make sure your serializer grabs the value smartly, though.
+                if (
+                    tag == "select"
+                    and len(requested_slice) == 1
+                    and spec.pk_field_name in requested_slice
+                ):
+                    continue
 
             if tag == "prefetch":
                 prefetch_queryset = (
@@ -123,40 +124,6 @@ class DynamicFieldsMixin:
         super().__init__(*args, **kwargs)
 
     @staticmethod
-    def representation_field_is_empty(representation_field):
-        if hasattr(representation_field, "child"):
-            representation_field = representation_field.child
-        if hasattr(representation_field, "_readable_fields"):
-            return (
-                next((_ for _ in representation_field._readable_fields), None) is None
-            )
-        return False
-
-    def setup_dynamic_fields(self, base_fields):
-        fields = {}
-        representation_fields = copy.deepcopy(self.representation_fields)
-
-        for field_name, nested_names in self.requested_fields.items():
-            if field_name not in representation_fields:
-                if field_name in base_fields:
-                    fields[field_name] = base_fields[field_name]
-                continue
-
-            representation_field = representation_fields[field_name]
-            if hasattr(representation_field, "child"):
-                representation_field.child.requested_fields = nested_names
-            else:
-                representation_field.requested_fields = nested_names
-
-            if self.representation_field_is_empty(representation_field):
-                continue
-
-            representation_field.bind(field_name=field_name, parent=self)
-            fields[field_name] = representation_field
-
-        return fields
-
-    @staticmethod
     def use_pk_only_optimization():
         # For the hijacked RelatedField's `get_attribute`.
         return True
@@ -170,17 +137,61 @@ class DynamicFieldsMixin:
             len(self._readable_fields) == 1
             and self._readable_fields[0].field_name == self.pk_field_name
         ):
-            pk_only = RelatedField.get_attribute(self, instance)
-            setattr(pk_only, self.pk_field_name, pk_only.pk)
-            return pk_only
+            try:
+                pk_only = RelatedField.get_attribute(self, instance)
+                setattr(pk_only, self.pk_field_name, pk_only.pk)
+                return pk_only
+            # Impossible in the case of reverse OneToOneField.
+            except TypeError:
+                pass
         return super().get_attribute(instance)
+
+    @staticmethod
+    def representation_field_is_empty(representation_field):
+        if hasattr(representation_field, "child"):
+            representation_field = representation_field.child
+        if hasattr(representation_field, "_readable_fields"):
+            return (
+                next((_ for _ in representation_field._readable_fields), None) is None
+            )
+        return False
 
     @cached_property
     def _readable_fields(self):
         base_fields = self.fields
-        if self.requested_fields is not None:
-            fields = self.setup_dynamic_fields(base_fields)
-        else:
-            fields = base_fields
+        fields = {}
+        representation_fields = copy.deepcopy(self.representation_fields)
+        allow_all_fields = self.requested_fields is None
+
+        for tag, (field_name, field) in tagged_chain(
+            base_fields.items(),
+            representation_fields.items(),
+            tag_names=("base", "representation"),
+        ):
+            if allow_all_fields:
+                if tag == "representation":
+                    field.bind(field_name=field_name, parent=self)
+                fields[field_name] = field
+                continue
+
+            if field_name not in self.requested_fields:
+                continue
+
+            if tag == "base":
+                if field_name not in representation_fields:
+                    fields[field_name] = field
+                continue
+
+            nested_fields = self.requested_fields[field_name]
+            if hasattr(field, "child"):
+                field.child.requested_fields = nested_fields
+            else:
+                field.requested_fields = nested_fields
+
+            if self.representation_field_is_empty(field):
+                continue
+
+            field.bind(field_name=field_name, parent=self)
+            fields[field_name] = field
 
         return [field for field in fields.values() if not field.write_only]
