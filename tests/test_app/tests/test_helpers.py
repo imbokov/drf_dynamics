@@ -178,3 +178,14 @@ class DynamicQuerySetTestCase(TestCase):
             DynamicSelect("reviewer", parent_prefetch_path="invites.answers"),
             self.viewset_class.dynamic_selects["invites.answers.person_who_reviewed"],
         )
+
+    def test_select_chaining(self):
+        prefetches = "invites"
+        selects = "invites.answer.reviewer"
+
+        dynamic_queryset(prefetches=prefetches, selects=selects)(self.viewset_class)
+
+        self.assertSpecsEqual(
+            DynamicSelect("answer__reviewer", parent_prefetch_path="invites"),
+            self.viewset_class.dynamic_selects["invites.answer.reviewer"],
+        )
