@@ -1,4 +1,4 @@
-# drf_dynamic
+# drf_dynamics
 
 ## Motivation
 
