@@ -100,7 +100,7 @@ class PartyViewSet(DynamicQuerySetMixin, ModelViewSet):
     serializer_class = PartySerializer
 ```
 
-The only thing it does by default is parse the `fields` query parameter and pass it to the serializer. It **doesn't** modify the queryset **yet**.
+The only thing it does by default is parse the `fields` query parameter and pass it to the serializer. It **doesn't** modify the queryset **yet**. For that you'll need to use `dynamic_queryset` decorator (see below).
 If you want to modify the actions, for which this should work, change the `dynamic_fields_actions` class attribute on the viewset:
 
 *Note: it has to be a set*
