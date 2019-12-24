@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="drf_dynamics",
-    version="0.0.3",
+    version="0.0.4",
     author="Ilya Bokov",
     author_email="eli.k.bokov@gmail.com",
     description="Dynamic mixins for Django REST Framework",

@@ -6,7 +6,7 @@ from drf_dynamics.specs import DynamicPrefetch
 class TestCase(APITestCase):
     def assertQuerysetsEqual(self, qs, other):
         """
-        Only works if prefetches are not string and have querysets.
+        Only works if prefetches are not strings and have querysets.
         """
         self.assertEqual(str(qs.query), str(other.query))
         self.assertEqual(

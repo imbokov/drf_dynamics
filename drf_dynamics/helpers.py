@@ -1,6 +1,5 @@
 import itertools
-from collections import Collection, Mapping, Sequence
-from operator import itemgetter
+from collections import Collection, Mapping, OrderedDict, Sequence
 
 from .specs import DynamicAnnotation, DynamicPrefetch, DynamicSelect, DynamicSpec
 
@@ -63,10 +62,9 @@ def get_deep(instance, path):
     """
     path = path.split(".")
     for path_segment in path:
-        if path_segment in instance:
-            instance = instance[path_segment]
-        else:
+        if path_segment not in instance:
             return None
+        instance = instance[path_segment]
     return instance
 
 
@@ -87,13 +85,12 @@ def dynamic_queryset(prefetches=None, annotations=None, selects=None):
                 mapping_to_merge = spec[-1]
             else:
                 sequence_to_merge = spec
-        return dict(
+        return OrderedDict(
             sorted(
                 {
                     **{path: None for path in sequence_to_merge},
                     **mapping_to_merge,
-                }.items(),
-                key=itemgetter(0),
+                }.items()
             )
         )
 

@@ -87,14 +87,14 @@ class DynamicQuerySetTestCase(TestCase):
             return Invite.objects.for_user(request.user)
 
         prefetches = {
-            "invites": DynamicPrefetch("invites", get_invites),
-            "invites.answers": "answer",
-            "invites.answers.details": "details",
             "invites.answers.unreviewed_details": DynamicPrefetch(
                 "details",
                 Details.objects.filter(reviewed=False),
                 to_attr="unreviewed_details",
             ),
+            "invites.answers.details": "details",
+            "invites": DynamicPrefetch("invites", get_invites),
+            "invites.answers": "answer",
         }
         annotations = (
             "invites_count",

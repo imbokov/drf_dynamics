@@ -11,23 +11,19 @@ class DynamicSerializerClassMixin:
     dynamic_serializer_class = {}
 
     def get_serializer_class(self):
-        return (
-            self.dynamic_serializer_class[self.action]
-            if self.action in self.dynamic_serializer_class
-            else self.serializer_class
-        )
+        return self.dynamic_serializer_class.get(self.action, self.serializer_class)
 
 
 class DynamicPermissionClassesMixin:
     dynamic_permission_classes = {}
 
     def get_permissions(self):
-        permission_classes = (
-            self.dynamic_permission_classes[self.action]
-            if self.action in self.dynamic_permission_classes
-            else self.permission_classes
-        )
-        return [permission() for permission in permission_classes]
+        return [
+            permission()
+            for permission in self.dynamic_permission_classes.get(
+                self.action, self.permission_classes
+            )
+        ]
 
 
 class DynamicQuerySetMixin:
@@ -141,7 +137,7 @@ class DynamicFieldsMixin:
                 pk_only = RelatedField.get_attribute(self, instance)
                 setattr(pk_only, self.pk_field_name, pk_only.pk)
                 return pk_only
-            # Impossible in the case of reverse OneToOneField.
+            # Will be raised in case of reverse OneToOneField.
             except TypeError:
                 pass
         return super().get_attribute(instance)

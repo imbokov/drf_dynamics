@@ -25,9 +25,7 @@ class DynamicQuerySetMixinTestCase(TestCase):
         viewset = self.viewset_class(
             request=MockRequest(query_params=query_params), action="destroy"
         )
-        self.assertQuerysetsEqual(
-            Party.objects.all(), viewset.get_queryset(),
-        )
+        self.assertQuerysetsEqual(Party.objects.all(), viewset.get_queryset())
 
     def test_get_queryset(self):
         for query_params, queryset in (
@@ -89,13 +87,11 @@ class DynamicQuerySetMixinTestCase(TestCase):
                 request=MockRequest(query_params=query_params, user=self.user),
                 action="list",
             )
-            self.assertQuerysetsEqual(
-                queryset, viewset.get_queryset(),
-            )
+            self.assertQuerysetsEqual(queryset, viewset.get_queryset())
 
     def test_get_queryset_no_fields(self):
         viewset = self.viewset_class(
-            request=MockRequest(query_params={}, user=self.user), action="list",
+            request=MockRequest(query_params={}, user=self.user), action="list"
         )
         self.assertQuerysetsEqual(
             Party.objects.prefetch_related(
