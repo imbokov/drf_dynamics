@@ -2,6 +2,7 @@ import itertools
 from collections import Collection, Mapping, OrderedDict, Sequence
 
 from .specs import DynamicAnnotation, DynamicPrefetch, DynamicSelect, DynamicSpec
+from django.core.exceptions import FieldDoesNotExist
 
 
 def tagged_chain(*iterables, tag_names=None):
@@ -65,6 +66,9 @@ def get_deep(instance, path):
         if path_segment not in instance:
             return None
         instance = instance[path_segment]
+        # instance is empty ex: tickets: {}
+        if not instance:
+            return {}
     return instance
 
 
@@ -102,8 +106,19 @@ def dynamic_queryset(prefetches=None, annotations=None, selects=None):
         return None
 
     def determine_queryset(parent_queryset, lookup):
-        model = parent_queryset.model._meta.get_field(lookup).related_model
-        return model._meta.default_manager.all()
+        _meta = parent_queryset.model._meta
+        model = None
+        try:
+            model = _meta.get_field(lookup).related_model
+        except FieldDoesNotExist:
+            for _, field in _meta.fields_map.items():
+                if field.related_name == lookup:
+                    model = field.related_model
+                    break
+
+        if model:
+            return model._meta.default_manager.all()
+        raise FieldDoesNotExist("%s has no field named '%s'" % (parent_queryset.model, lookup))
 
     def wrapper(klass):
         root_queryset = klass.queryset
